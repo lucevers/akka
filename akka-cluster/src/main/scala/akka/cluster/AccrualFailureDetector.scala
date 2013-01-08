@@ -165,7 +165,7 @@ class AccrualFailureDetector(
       val φ = phi(timeDiff, mean + acceptableHeartbeatPauseMillis, stdDeviation)
 
       // FIXME change to debug log level, when failure detector is stable
-      if (φ > 1.0 && timeDiff < (acceptableHeartbeatPauseMillis + 5000))
+      if (φ > 1.0 && timeDiff < (acceptableHeartbeatPauseMillis + 25000))
         log.info("Phi value [{}] for connection [{}], after [{} ms], based on  [{}]",
           φ, connection, timeDiff, "N(" + mean + ", " + stdDeviation + ")")
 

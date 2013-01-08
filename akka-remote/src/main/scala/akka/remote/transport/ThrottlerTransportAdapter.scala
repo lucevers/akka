@@ -119,7 +119,7 @@ private[transport] object ThrottlerManager {
   case class Checkin(origin: Address, handle: ThrottlerHandle)
 }
 
-private[transport] class ThrottlerManager(wrappedTransport: Transport) extends Actor {
+private[transport] class ThrottlerManager(wrappedTransport: Transport) extends Actor with ActorLogging {
 
   import context.dispatcher
 
@@ -200,8 +200,14 @@ private[transport] class ThrottlerManager(wrappedTransport: Transport) extends A
   }
 
   private def setMode(handle: ThrottlerHandle, mode: ThrottleMode, direction: Direction): Unit = {
-    if (direction.includes(Direction.Receive)) handle.throttlerActor ! mode
-    if (direction.includes(Direction.Send)) handle.outboundThrottleMode.set(mode)
+    if (direction.includes(Direction.Receive)) {
+      log.info("setMode Receive to [{}] remoteAddress: [{}] handleTable: [{}]", handle.remoteAddress, mode, handleTable)
+      handle.throttlerActor ! mode
+    }
+    if (direction.includes(Direction.Send)) {
+      log.info("setMode Send to [{}] remoteAddress: [{}] handleTable: [{}]", handle.remoteAddress, mode, handleTable)
+      handle.outboundThrottleMode.set(mode)
+    }
   }
 
   private def wrapHandle(originalHandle: AssociationHandle, listener: AssociationEventListener, inbound: Boolean): ThrottlerHandle = {
@@ -288,6 +294,7 @@ private[transport] class ThrottledAssociation(
       stay()
     case Event(mode: ThrottleMode, ExposedHandle(exposedHandle)) ⇒
       inboundThrottleMode = mode
+      log.info("Changing throttle mode 1 to [{}] [{}]", mode, originalHandle.remoteAddress)
       if (inboundThrottleMode == Blackhole) {
         throttledMessages = Queue.empty[ByteString]
         exposedHandle.disassociate()
@@ -313,6 +320,7 @@ private[transport] class ThrottledAssociation(
     case Event((listener: HandleEventListener, mode: ThrottleMode), _) ⇒
       upstreamListener = listener
       inboundThrottleMode = mode
+      log.info("Changing throttle mode 2 to [{}] [{}]", mode, originalHandle.remoteAddress)
       self ! Dequeue
       goto(Throttling)
     case Event(InboundPayload(p), _) ⇒
@@ -323,6 +331,7 @@ private[transport] class ThrottledAssociation(
   when(Throttling) {
     case Event(mode: ThrottleMode, _) ⇒
       inboundThrottleMode = mode
+      log.info("Changing throttle mode 3 to [{}] [{}]", mode, originalHandle.remoteAddress)
       if (inboundThrottleMode == Blackhole) throttledMessages = Queue.empty[ByteString]
       cancelTimer(DequeueTimerName)
       if (throttledMessages.nonEmpty)
