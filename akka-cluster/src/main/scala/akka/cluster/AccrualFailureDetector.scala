@@ -120,7 +120,7 @@ class AccrualFailureDetector(
    */
   @tailrec
   final def heartbeat(connection: Address) {
-    log.debug("Heartbeat from connection [{}] ", connection)
+    log.info("Heartbeat from connection [{}] ", connection)
 
     val timestamp = clock()
     val oldState = state.get
