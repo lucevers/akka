@@ -92,6 +92,8 @@ Java:
 API Changes to Future - Scala
 =============================
 
+A ``Promise`` is no longer also a ``Future``, obtain the reference to its Future by calling ``promise.future``.
+
 v2.0::
 
   def square(i: Int): Future[Int] = Promise successful i * i
@@ -113,10 +115,18 @@ v2.1::
     case m: NoSuchElementException => 
   }
 
+v2.0::
 
+  Await.result(promise, duration)
+
+v2.1::
+
+  Await.result(promise.future, duration)
 
 API Changes to Future - Java
 ============================
+
+A ``Promise`` is no longer also a ``Future``, obtain the reference to its Future by calling ``promise.future()``.
 
 v2.0::
 
@@ -190,6 +200,14 @@ v2.1::
           sendToTheInternetz(result);
       }
     }, ec);
+
+v2.0::
+
+  Await.result(promise, duration);
+
+v2.1::
+
+  Await.result(promise.future(), duration);
 
 API changes to DynamicAccess
 ============================
